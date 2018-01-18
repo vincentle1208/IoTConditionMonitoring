@@ -1,9 +1,18 @@
-import serial
+'''
+/*
+ * Author : Le Vinh Hao 43469332
+ * Work Description : Summer Research for real-time and continuous Acoustic IoT monitoring
+ * Institution : The University of Queensland
+ * Supervisor : Dr. Hui Ma, Miss Rollsy Ponmattam Madassery
+ * Date : 1 Dec 2017
+ * References : Amazon Web Service, Bitscope
+ */
+ '''
 
+import serial
 import logging
 import time
 import argparse
-
 import threading
 import struct
 from collections import deque
@@ -28,7 +37,10 @@ tickRate = 0
 filePath = "./" + fileName + ".txt"
 readCount = 600
 
-####################################################
+##############################################################################################
+# Parts of Python scripts within red hash are scripts provided from the Amazon Web Service for
+# connection between AWS IoT and MQTT broker including publisher and subscriber
+##############################################################################################
 
 # Custom MQTT message callback
 def customCallback(client, userdata, message):
@@ -72,9 +84,6 @@ if not args.useWebsocket and (not args.certificatePath or not args.privateKeyPat
 logger = logging.getLogger("AWSIoTPythonSDK.core")
 logger.setLevel(logging.DEBUG)
 streamHandler = logging.StreamHandler()
-#formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-#streamHandler.setFormatter(formatter)
-#logger.addHandler(streamHandler)
 
 # Init AWSIoTMQTTClient
 myAWSIoTMQTTClient = None
@@ -99,13 +108,11 @@ myAWSIoTMQTTClient.connect()
 myAWSIoTMQTTClient.subscribe(topic, 1, customCallback)
 time.sleep(0.1)
 
-##################################################
+###################################################################################
 
-if channels == 1:
-    if not macro:
-        tickRate = sampleRate
-    else:
-        tickRate = sampleRate * 2
+# Due to 12 bit data requirements, Macro has to be selected to provide high resolution
+# data acquisition. Python scripts below have been provided by Bitscope Help Service.
+# The scripts have been modified to acquire and store data according this project requirements by myself.
 
 """ Serial helpers """
 def issue(message):
@@ -138,8 +145,9 @@ def freqToHexTicks(freq):
     zeroAdds = "0" * (4 % len(hexTicks))
     combined = zeroAdds + hexTicks
     return combined[2:], combined[:2]
-    
-def getToRange(fromRange, toRange):
+
+""" Converting from bits range to voltage range"""
+def getToRange(fromRange, toRange): 
     fr, tr = fromRange, toRange
     slope = float(tr[1] - tr[0]) / float(fr[1] - fr[0])
     return lambda v : round((10**6) * (tr[0] + slope * float(v - fr[0])), 1)
@@ -154,6 +162,7 @@ def decode1ChMacro(data):
         i = a + b
     return unpacked
 
+
 def setupBS():
     """ Standard setup procedure. """
     if channels == 1:
@@ -167,7 +176,7 @@ def setupBS():
     issueWait(
         "[21]@[" + modeString + "]s" # Stream mode (Macro Analogue Chop (is 03))
         + "[37]@[" + chString + "]sn[00]s" # Analogue ch enable (both)
-        + "[2e]@[%s]sn[%s]s" % freqToHexTicks(tickRate) # Clock ticks
+        + "[2e]@[%s]sn[%s]s" % freqToHexTicks(sampleRate) # Clock ticks
         + "[14]@[03]sn[00]s" # Clock scale (Doesn't work for streaming mode)
         + "[36]@[" + frameToken + "]s" # Stream data token
         + "[66]@[5a]sn[b2]s" # High
@@ -194,8 +203,6 @@ def readLoop():
 def writeToFile(file, data, count):
     # Write to file
     dataStr = ','.join(map(str, data))
-    #for i in range(len(data)/100):
-     #   print data[i]
     strData = dataStr + ',' + '\n'
     toWrite = str(datetime.now()) + '\n'
     file.write(toWrite)
@@ -218,7 +225,6 @@ def main():
         
         counter = 0
         while True:
-            #time.sleep(0.1)
             while len(dataQueue):
                 # Pop data
                 data = dataQueue.popleft()
@@ -228,6 +234,7 @@ def main():
                 voltData = list(map(toRangeLambda, levelData))
                 # Write
                 messageObject = writeToFile(dumpFile, voltData, counter)
+                # Publich to IoT MQTT Broker
                 myAWSIoTMQTTClient.publish("/AcousticSensor", messageObject, 1)
     
     except (KeyboardInterrupt, Exception) as e:

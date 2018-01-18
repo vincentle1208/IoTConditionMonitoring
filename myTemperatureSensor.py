@@ -1,19 +1,14 @@
 '''
 /*
- * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+ * Author : Le Vinh Hao 43469332
+ * Work Description : Summer Research for real-time and continuous Temperature IoT monitoring
+ * Institution : The University of Queensland
+ * Supervisor : Dr. Hui Ma, Miss Rollsy Ponmattam Madassery
+ * Date : 1 Dec 2017
+ * References : Amazon Web Service
  */
  '''
+
 import os
 import glob
 import time
@@ -68,7 +63,6 @@ def read_temp(sensor, speed):
     if equals_pos != -1:
         temp_string = lines[1][equals_pos+2:]
         temp_c = float(temp_string) / 1000.0
-##    time.sleep(int(speed))
     return temp_c
 
 def set_sampling_time():
@@ -80,9 +74,12 @@ def set_sampling_time():
 
 def live_sampling(sensor, speed, fileWrite) :
     data = read_temp(sensor, speed)
-    #fileWrite.write('{0}\n'.format(data))
     return data
-####################################################
+
+##############################################################################################
+# Parts of Python scripts within red hash are scripts provided from the Amazon Web Service for
+# connection between AWS IoT and MQTT broker including publisher and subscriber
+##############################################################################################
 
 # Custom MQTT message callback
 def customCallback(client, userdata, message):
@@ -126,9 +123,6 @@ if not args.useWebsocket and (not args.certificatePath or not args.privateKeyPat
 logger = logging.getLogger("AWSIoTPythonSDK.core")
 logger.setLevel(logging.DEBUG)
 streamHandler = logging.StreamHandler()
-#formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-#streamHandler.setFormatter(formatter)
-#logger.addHandler(streamHandler)
 
 # Init AWSIoTMQTTClient
 myAWSIoTMQTTClient = None
@@ -153,10 +147,12 @@ myAWSIoTMQTTClient.connect()
 myAWSIoTMQTTClient.subscribe(topic, 1, customCallback)
 time.sleep(2)
 
-# Publish to the same topic in a loop forever
-loopCount = 0
+################################################################################################
 
+
+# Publish to the same topic in a loop forever
 def main():
+    # Set initial sampling time for the temperature sensors
     sensorSamplingRate = set_sampling_time()
     print(sensorSamplingRate)
 
@@ -166,6 +162,7 @@ def main():
             for i in range(3):
                 temp[i] = live_sampling(DEVICE_FOLDER[i], sensorSamplingRate, "")
                 print('Sensor {0} is {1}'.format(SENSORS[i], temp[i]))
+            # A message format has to be set so that MQTT broker can receive the message correctly
             messageObject = ("{0} : {1},{2} : {3},{4} : {5}".
                              format(SENSORS[0], temp[0], SENSORS[1], temp[1],
                                     SENSORS[2], temp[2]))
