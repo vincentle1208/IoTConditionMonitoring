@@ -25,6 +25,10 @@ hash -r
 
 update-nodejs-and-nodered
 
+sudo npm install node-red-dashboard
+
+sudo npm install node-red-node-sqlite
+
 ### Install phpLiteAdmin database on the Raspberry Pi 3
 Following instructions on https://randomnertutorials.com/how-to-install-phpliteadmin-database-in-a-raspberry-pi
 
