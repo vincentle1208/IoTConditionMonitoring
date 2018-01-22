@@ -198,15 +198,34 @@ def readLoop():
         toGet = 20000                   # Take 44000 samples in 1 second
         data = ser.read(toGet)
         dataQueue.append(data)
-        time.sleep(1)
+        #time.sleep(0.5)
         
 def writeToFile(file, data, count):
     # Write to file
     dataStr = ','.join(map(str, data))
     strData = dataStr + ',' + '\n'
-    toWrite = str(datetime.now()) + '\n'
-    file.write(toWrite)
-    return strData
+    maxPoint = getMaximum(data)
+    minPoint = getMinimum(data)
+    #print("{0} {1}".format(maxPoint, minPoint))
+
+    twoPeaks = maxPoint + ',' + minPoint + '\n'
+    print(twoPeaks)
+    return twoPeaks
+
+def getMinimum(dataPoints):
+    minimum = 1726000 # Threshold for offset voltage
+    for point in dataPoints:
+        if minimum > point:
+            minimum = point
+    return str(minimum)
+
+def getMaximum(dataPoints):
+    maximum = 0
+    for point in dataPoints:
+        if point > maximum:
+            maximum = point
+    return str(maximum)
+    
     
 def main():
     try :
@@ -236,6 +255,7 @@ def main():
                 messageObject = writeToFile(dumpFile, voltData, counter)
                 # Publich to IoT MQTT Broker
                 myAWSIoTMQTTClient.publish("/AcousticSensor", messageObject, 1)
+                counter = counter + 1
     
     except (KeyboardInterrupt, Exception) as e:
         running = False
