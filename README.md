@@ -1,4 +1,7 @@
 # IoTConditionMonitoring Installation Instruction
+This project requires manual installations for IoT Condition Monitoring on a brand new Raspberry Pi 3.
+
+All the installations should only executed once for each new Raspberry Pi 3 as a standalone Unit. After installing all required program, the Pi is ready to perform remotedly with Wi-Fi connection area. This standalone unit is highly recommended to have a monitor to perform Terminal commands. Otherwise, it can be controlled through ssh on a Laptop through Ethernet.  
 
 ## WiFi connection
 Following instructions on: ceit.uq.edu.au/wiki/index.php/connecting_to_Eduroam
